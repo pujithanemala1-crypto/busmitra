@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings & Accessibility - BusMitra</title>
+  <meta name="description" content="Configure language preferences, accessibility options, high contrast, text size, and transit notifications.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+
+    .setting-info h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-navy);
+      margin-bottom: 0.2rem;
+    }
+
+    .setting-info p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Switch toggle */
+    .switch-toggle {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #CBD5E1;
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: #1D4ED8;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="home.html" class="brand-link">
+        <div class="brand-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.6 19.1 6 18 6H4C2.9 6 1.9 6.6 1.6 7.8L.2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </div>
+        <span class="brand-text">Bus<span class="brand-text-accent">Mitra</span></span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="buses.html" class="nav-link">Available Buses</a>
+        <a href="bus-details.html?id=AP161234" class="nav-link">Track Bus</a>
+        <a href="help.html" class="nav-link">Help</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="language.html" class="lang-selector-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="header-current-lang">English</span>
+        </a>
+        <a href="profile.html" class="profile-avatar-btn">
+          <img src="assets/images/commuter_avatar.jpg" alt="User Profile" class="profile-avatar-img">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container" style="padding-top: 2.5rem; padding-bottom: 4rem; max-width:840px;">
+    
+    <div class="breadcrumbs">
+      <a href="home.html">Home</a>
+      <span class="separator">/</span>
+      <span>Settings & Accessibility</span>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+      <h1 style="font-size:2rem; font-weight:800; color:var(--color-navy); margin-bottom:0.25rem;">
+        Preferences & Accessibility
+      </h1>
+      <p style="color:var(--text-muted); font-size:0.9375rem;">
+        Customize text legibility, high contrast, voice inputs, and live hardware telematics.
+      </p>
+    </div>
+
+    <!-- Accessibility Card -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h2 class="card-title" style="margin-bottom:0.25rem;">Commuter Accessibility</h2>
+      <p class="card-subtitle" style="margin-bottom:1rem;">Designed to assist senior citizens and visually impaired passengers</p>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Larger Text Mode</h3>
+          <p>Increases font sizes, labels, and touch targets across all pages.</p>
+        </div>
+        <label class="switch-toggle">
+          <input type="checkbox" id="toggle-larger-text">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>High Contrast Mode</h3>
+          <p>Maximizes luminance contrast with stark black & cyan backgrounds for enhanced outdoor daylight visibility.</p>
+        </div>
+        <label class="switch-toggle">
+          <input type="checkbox" id="toggle-high-contrast">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Voice Search Preference</h3>
+          <p>Enable native microphone speech recognition for hands-free destination search.</p>
+        </div>
+        <label class="switch-toggle">
+          <input type="checkbox" id="toggle-voice-pref" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <h3>Seat Availability Notifications</h3>
+          <p>Receive sound/haptic alert when your tracked bus has more than 5 available seats.</p>
+        </div>
+        <label class="switch-toggle">
+          <input type="checkbox" id="toggle-notifications" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Language & Region Card -->
+    <div class="card" style="margin-bottom: 1.5rem;">
+      <h2 class="card-title" style="margin-bottom:0.25rem;">Language & Regional Settings</h2>
+      <p class="card-subtitle" style="margin-bottom:1.25rem;">Choose which language BusMitra renders in</p>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-weight:700; color:var(--color-navy); font-size:0.95rem;">Active Language</div>
+          <div id="settings-active-lang" style="font-size:0.875rem; color:var(--color-royal-blue); margin-top:2px;">English (English)</div>
+        </div>
+        <a href="language.html" class="btn btn-primary btn-sm">
+          Change Language
+        </a>
+      </div>
+    </div>
+
+    <!-- Backend & Hardware Integration Card (Section 19 FastAPI Prep) -->
+    <div class="card">
+      <h2 class="card-title" style="margin-bottom:0.25rem;">FastAPI Backend & Hardware Bridge</h2>
+      <p class="card-subtitle" style="margin-bottom:1.25rem;">Configure REST endpoint URL and WebSocket gateway for ESP32 IR sensors</p>
+
+      <div class="input-group" style="margin-bottom:1rem;">
+        <label class="input-label" for="api-base-url-input">FastAPI Base URL</label>
+        <input id="api-base-url-input" type="text" class="form-control" value="http://localhost:8000" style="padding-left:1rem; font-family:var(--font-mono); font-size:0.875rem;">
+        <span style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+          Endpoints prepared: <code>/api/buses</code>, <code>/api/buses/{id}/occupancy</code>, <code>/ws/buses/{id}</code>
+        </span>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">Current Mode: </span>
+          <span class="sim-mode-tag" id="settings-current-mode">SIMULATED DEMO</span>
+        </div>
+        <button id="save-api-config-btn" class="btn btn-secondary btn-sm">
+          Save Configuration
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2026 BusMitra Public Mobility Systems. All preferences saved locally in browser storage.</span>
+        <span>Andhra Pradesh Transit Network</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/language.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Load current toggles from localStorage
+      const largerTextToggle = document.getElementById("toggle-larger-text");
+      const highContrastToggle = document.getElementById("toggle-high-contrast");
+      const voiceToggle = document.getElementById("toggle-voice-pref");
+      const notifToggle = document.getElementById("toggle-notifications");
+      const activeLangEl = document.getElementById("settings-active-lang");
+      const apiUrlInput = document.getElementById("api-base-url-input");
+      const saveApiBtn = document.getElementById("save-api-config-btn");
+
+      // Active Language
+      if (activeLangEl) {
+        const langObj = window.BUSMITRA_LANGUAGES.find(l => l.code === window.getCurrentLanguage());
+        if (langObj) activeLangEl.textContent = `${langObj.native} (${langObj.name})`;
+      }
+
+      // Larger text toggle
+      const isLargeText = localStorage.getItem("busmitra_large_text") === "true";
+      if (largerTextToggle) {
+        largerTextToggle.checked = isLargeText;
+        largerTextToggle.addEventListener("change", (e) => {
+          localStorage.setItem("busmitra_large_text", e.target.checked);
+          document.body.classList.toggle("large-text", e.target.checked);
+          if (window.showToast) window.showToast(`Large text mode ${e.target.checked ? 'enabled' : 'disabled'}`);
+        });
+      }
+
+      // High contrast toggle
+      const isHighContrast = localStorage.getItem("busmitra_high_contrast") === "true";
+      if (highContrastToggle) {
+        highContrastToggle.checked = isHighContrast;
+        highContrastToggle.addEventListener("change", (e) => {
+          localStorage.setItem("busmitra_high_contrast", e.target.checked);
+          document.body.classList.toggle("high-contrast", e.target.checked);
+          if (window.showToast) window.showToast(`High contrast mode ${e.target.checked ? 'enabled' : 'disabled'}`);
+        });
+      }
+
+      // API config
+      if (apiUrlInput && window.BUSMITRA_API) {
+        apiUrlInput.value = window.BUSMITRA_API.BASE_URL;
+      }
+      if (saveApiBtn) {
+        saveApiBtn.addEventListener("click", () => {
+          if (apiUrlInput && window.BUSMITRA_API) {
+            window.BUSMITRA_API.setBaseUrl(apiUrlInput.value);
+            if (window.showToast) window.showToast("FastAPI configuration updated successfully.");
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

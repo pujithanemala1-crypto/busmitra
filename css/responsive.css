@@ -1,0 +1,143 @@
+/* ==========================================================================
+   BUSMITRA - Responsive Layout Stylesheet (Desktop, Tablet & Mobile)
+   ========================================================================== */
+
+/* Tablet (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  
+  .details-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .bus-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile & Small Screens (max-width: 768px) */
+@media (max-width: 768px) {
+  .site-header .nav-links {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    background: #FFFFFF;
+    flex-direction: column;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .site-header .nav-links.mobile-open {
+    display: flex;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface-alt);
+    border: 1px solid var(--border-subtle);
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .sim-mode-bar {
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: flex-start;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Search Hero Container */
+  .search-hero {
+    padding: 2rem 1rem !important;
+  }
+
+  .search-inputs-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Filter Toolbar */
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  /* Map Container */
+  .map-wrapper {
+    height: 340px !important;
+  }
+
+  /* Intro Screen adjustments */
+  .bus-actor-wrap {
+    width: 300px;
+    height: 110px;
+    bottom: 30px;
+  }
+
+  .road-container {
+    height: 140px;
+  }
+
+  .intro-controls {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  /* Touch targets minimum 44px */
+  .btn, .form-control, .lang-selector-btn, .profile-avatar-btn {
+    min-height: 44px;
+  }
+}
+
+/* Small mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .brand-link span.brand-text {
+    font-size: 1.15rem;
+  }
+
+  .bus-card-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 0.5rem;
+  }
+
+  .bus-card-actions {
+    width: 100%;
+  }
+
+  .bus-card-actions .btn {
+    width: 100%;
+  }
+}

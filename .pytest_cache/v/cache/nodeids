@@ -1,0 +1,18 @@
+[
+  "backend/tests/test_api.py::test_admin_database_summary_endpoint",
+  "backend/tests/test_api.py::test_bus_details_and_route",
+  "backend/tests/test_api.py::test_bus_search_and_filter",
+  "backend/tests/test_api.py::test_crowd_prediction",
+  "backend/tests/test_api.py::test_database_health_endpoint",
+  "backend/tests/test_api.py::test_esp32_direct_sensor_and_idempotency",
+  "backend/tests/test_api.py::test_eta_service",
+  "backend/tests/test_api.py::test_etm_ticket_insertion_and_expected_exits",
+  "backend/tests/test_api.py::test_get_all_buses",
+  "backend/tests/test_api.py::test_gps_location_update",
+  "backend/tests/test_api.py::test_health_check",
+  "backend/tests/test_api.py::test_invalid_sensor_event_prevent_negative_passengers",
+  "backend/tests/test_api.py::test_occupancy_and_available_seats_calculation",
+  "backend/tests/test_api.py::test_passenger_ir_sensor_in_and_out",
+  "backend/tests/test_api.py::test_unauthorized_admin_summary_access",
+  "backend/tests/test_api.py::test_websocket_connection"
+]

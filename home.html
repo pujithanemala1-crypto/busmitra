@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BusMitra - Smart Public Transportation & Live Bus Tracking</title>
+  <meta name="description" content="Find your bus, track live coordinates, check real-time available seats and crowd levels via IR sensors.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .home-hero-wrap {
+      background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+      padding: 3rem 0 4rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    
+    .hero-layout-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .hero-bus-image-frame {
+      position: relative;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .hero-bus-image-frame img {
+      width: 100%;
+      height: 380px;
+      object-fit: cover;
+    }
+
+    .search-inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .location-status-badge {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      margin-top: 0.5rem;
+    }
+
+    .location-status-badge.loading {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+    }
+
+    .location-status-badge.success {
+      background: #DCFCE7;
+      color: #16A34A;
+      border: 1px solid #BBF7D0;
+    }
+
+    .location-status-badge.error {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 1px solid #FECACA;
+    }
+
+    .voice-feedback {
+      display: none;
+      font-size: 0.8125rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      margin-top: 0.5rem;
+    }
+
+    .voice-feedback.listening {
+      background: #FEF3C7;
+      color: #B45309;
+      border: 1px solid #FDE68A;
+    }
+
+    .voice-feedback.error {
+      background: #FEE2E2;
+      color: #DC2626;
+      border: 1px solid #FECACA;
+    }
+
+    .recent-searches-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .recent-search-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      border-radius: 9999px;
+      font-size: 0.8125rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .recent-search-chip:hover {
+      background: #EEF2FF;
+      border-color: var(--color-royal-blue);
+      color: var(--color-royal-blue);
+    }
+
+    .popular-dest-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .popular-dest-card {
+      padding: 1rem 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .popular-dest-card:hover {
+      border-color: var(--color-royal-blue);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mode Notification Ribbon -->
+  <div class="sim-mode-bar">
+    <div class="mode-info">
+      <span class="sim-mode-tag" data-i18n="simulated_notice">SIMULATED DEMO DATA</span>
+      <span>Connected to Vijayawada – Guntur Smart Transit Corridor Simulation</span>
+    </div>
+    <div class="mode-actions">
+      <span style="font-size: 0.75rem; color: #94A3B8;">Hardware Bridge: ESP32 IR Sensor Emulation</span>
+      <button class="mode-toggle-btn mode-toggle-action">Toggle Live/Demo Mode</button>
+    </div>
+  </div>
+
+  <!-- Global Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <!-- Zone 1: Single Brand Link -->
+      <a href="home.html" class="brand-link">
+        <div class="brand-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.6 19.1 6 18 6H4C2.9 6 1.9 6.6 1.6 7.8L.2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </div>
+        <span class="brand-text">Bus<span class="brand-text-accent">Mitra</span></span>
+      </a>
+
+      <!-- Zone 2: Navigation Links -->
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link active" data-i18n="nav_home">Home</a>
+        <a href="buses.html" class="nav-link" data-i18n="nav_available_buses">Available Buses</a>
+        <a href="bus-details.html?id=AP161234" class="nav-link" data-i18n="nav_track_bus">Track Bus</a>
+        <a href="help.html" class="nav-link" data-i18n="nav_help">Help</a>
+      </nav>
+
+      <!-- Zone 3: Header Actions -->
+      <div class="header-actions">
+        <!-- Language Switcher button -->
+        <a href="language.html" class="lang-selector-btn" title="Change Language">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="header-current-lang">English</span>
+        </a>
+
+        <!-- Profile Link -->
+        <a href="profile.html" class="profile-avatar-btn" title="View Profile">
+          <img src="assets/images/commuter_avatar.jpg" alt="User Profile" class="profile-avatar-img">
+          <span style="display:none;" class="md:inline">Ramesh</span>
+        </a>
+
+        <!-- Settings Icon -->
+        <a href="settings.html" class="btn btn-secondary btn-sm" title="Settings" style="width:38px; height:38px; padding:0; border-radius:50%;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </a>
+
+        <!-- Mobile Drawer Toggle -->
+        <button id="mobile-menu-btn" class="mobile-menu-toggle" aria-label="Toggle Navigation Menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero & Route Search Section -->
+  <section class="home-hero-wrap">
+    <div class="container">
+      
+      <div class="hero-layout-grid">
+        
+        <!-- Left Column: Search Form -->
+        <div>
+          <div style="margin-bottom: 2rem;">
+            <div style="display:inline-flex; align-items:center; gap:0.4rem; color:var(--color-royal-blue); font-weight:700; font-size:0.875rem; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:0.5rem;">
+              <span style="width:8px; height:8px; border-radius:50%; background:var(--color-cyan);"></span>
+              Smart IoT Public Transit
+            </div>
+            <h1 style="font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; color: var(--color-navy); letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 0.75rem;" data-i18n="hero_title">
+              Where would you like to go?
+            </h1>
+            <p style="font-size: 1.0625rem; color: var(--text-muted);" data-i18n="hero_subtitle">
+              Find your bus. Track your journey. Travel smarter.
+            </p>
+          </div>
+
+          <!-- Master Search Card -->
+          <div class="card" style="border: 1.5px solid #CBD5E1; box-shadow: var(--shadow-lg);">
+            <form id="bus-search-form">
+              
+              <div class="search-inputs-grid">
+                
+                <!-- Input A: Source Location -->
+                <div class="input-group">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label for="source-input" class="input-label" data-i18n="from_source">From – Source Location</label>
+                    <button type="button" id="use-gps-btn" style="color:var(--color-royal-blue); font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:0.25rem;">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                      <span data-i18n="use_current_location">Use GPS</span>
+                    </button>
+                  </div>
+                  
+                  <div class="input-wrapper">
+                    <span class="input-icon-left">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
+                    <input 
+                      id="source-input" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Enter starting bus stop (e.g., Vijayawada PNBS)"
+                      value="Vijayawada"
+                      data-i18n="enter_source_placeholder"
+                    >
+                  </div>
+
+                  <!-- Location Status Banner -->
+                  <div id="source-location-status" class="location-status-badge"></div>
+                </div>
+
+                <!-- Input B: Destination -->
+                <div class="input-group">
+                  <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <label for="dest-input" class="input-label" data-i18n="to_destination">To – Destination</label>
+                    <button type="button" id="swap-locations-btn" style="color:var(--text-muted); font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:0.25rem;" title="Swap Locations">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/></svg>
+                      <span>Swap</span>
+                    </button>
+                  </div>
+
+                  <div class="input-wrapper">
+                    <span class="input-icon-left">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    </span>
+                    <input 
+                      id="dest-input" 
+                      type="text" 
+                      class="form-control" 
+                      placeholder="Enter destination stop (e.g., Guntur)"
+                      value="Guntur"
+                      data-i18n="enter_dest_placeholder"
+                    >
+                    <div class="input-icon-right">
+                      <button type="button" id="clear-dest-btn" style="padding:0.25rem; color:#94A3B8;" title="Clear destination">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                      <button type="button" id="voice-search-btn" style="padding:0.35rem; color:#1D4ED8; background:#EFF6FF; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" title="Voice Search (Speak Destination)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Voice Feedback Banner -->
+                  <div id="voice-feedback-status" class="voice-feedback"></div>
+                </div>
+
+              </div>
+
+              <!-- Error notice container -->
+              <div id="search-error-msg" style="display:none; color:#DC2626; font-size:0.875rem; margin-bottom:1rem; font-weight:600;"></div>
+
+              <!-- CTA Button: Find Available Buses -->
+              <button type="submit" class="btn btn-primary btn-lg" style="width:100%; font-size:1.125rem;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span data-i18n="find_available_buses">Find Available Buses</span>
+              </button>
+
+            </form>
+
+            <!-- Recent Searches in LocalStorage -->
+            <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-subtle);">
+              <span style="font-size: 0.8125rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em;" data-i18n="recent_searches">
+                Recent Searches
+              </span>
+              <div id="recent-searches-list" class="recent-searches-chips">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right Column: Visual Hero Mobility Photography & Live IR Stats Showcase -->
+        <div>
+          <div class="hero-bus-image-frame">
+            <img src="assets/images/hero_bus.jpg" alt="Modern BusMitra Electric Smart Bus on Highway">
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(0deg, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.6) 70%, transparent 100%); padding: 1.5rem; color: white;">
+              <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.35rem;">
+                <span class="crowd-pill low">Live Telematics</span>
+                <span style="font-size:0.75rem; color:#38BDF8; font-weight:600;">Route AP-16</span>
+              </div>
+              <h3 style="font-size:1.15rem; font-weight:700; color:white; margin-bottom:0.25rem;">Vijayawada ↔ Guntur High Frequency Express</h3>
+              <p style="font-size:0.8125rem; color:#94A3B8;">Equipped with directional dual-beam IR sensors for real-time seat counters.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Popular Destinations Strip -->
+  <section style="padding: 3rem 0;">
+    <div class="container">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+        <div>
+          <h2 style="font-size: 1.35rem; font-weight: 700; color: var(--color-navy);" data-i18n="popular_destinations">Popular Routes & Destinations</h2>
+          <p style="font-size: 0.875rem; color: var(--text-muted);">Quickly tap a major transit stop to search available buses instantly</p>
+        </div>
+      </div>
+
+      <div class="popular-dest-grid">
+        <div class="popular-dest-card" onclick="BUSMITRA_SEARCH.selectPopularDestination('Guntur')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--color-navy); font-size:1.05rem;">Guntur</strong>
+            <span style="color:var(--color-royal-blue); font-size:0.8125rem; font-weight:600;">34 km</span>
+          </div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">Frequency: Every 10 mins</span>
+        </div>
+
+        <div class="popular-dest-card" onclick="BUSMITRA_SEARCH.selectPopularDestination('Mangalagiri')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--color-navy); font-size:1.05rem;">Mangalagiri</strong>
+            <span style="color:var(--color-royal-blue); font-size:0.8125rem; font-weight:600;">14 km</span>
+          </div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">AIIMS Connect · Every 8 mins</span>
+        </div>
+
+        <div class="popular-dest-card" onclick="BUSMITRA_SEARCH.selectPopularDestination('Gannavaram')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--color-navy); font-size:1.05rem;">Gannavaram</strong>
+            <span style="color:var(--color-royal-blue); font-size:0.8125rem; font-weight:600;">21 km</span>
+          </div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">Airport Link · Every 12 mins</span>
+        </div>
+
+        <div class="popular-dest-card" onclick="BUSMITRA_SEARCH.selectPopularDestination('Tenali')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--color-navy); font-size:1.05rem;">Tenali</strong>
+            <span style="color:var(--color-royal-blue); font-size:0.8125rem; font-weight:600;">38 km</span>
+          </div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">Andhra Paris · Every 15 mins</span>
+        </div>
+
+        <div class="popular-dest-card" onclick="BUSMITRA_SEARCH.selectPopularDestination('Eluru')">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong style="color:var(--color-navy); font-size:1.05rem;">Eluru</strong>
+            <span style="color:var(--color-royal-blue); font-size:0.8125rem; font-weight:600;">58 km</span>
+          </div>
+          <span style="font-size:0.8125rem; color:var(--text-muted);">NH-16 Express · Every 20 mins</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- IR Sensor Innovation Feature Spotlight -->
+  <section style="background-color: #0F172A; color: white; padding: 4rem 0;">
+    <div class="container">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items:center;" class="details-grid">
+        <div>
+          <div style="color:var(--color-cyan); font-weight:700; font-size:0.875rem; letter-spacing:0.04em; text-transform:uppercase; margin-bottom:0.5rem;">
+            Hardware Innovation
+          </div>
+          <h2 style="font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 1rem;">
+            Real-Time IR Sensor Crowd Monitoring
+          </h2>
+          <p style="color: #94A3B8; font-size: 1rem; line-height: 1.6; margin-bottom: 1.5rem;">
+            Unlike ordinary static timetables, BusMitra uses directional infrared passenger sensors connected to an ESP32 micro-controller at bus entry and exit doorways. Every boarding increases the IN counter, while alighting increments the OUT counter, providing live seat availability before the bus even arrives.
+          </p>
+          <div style="display:flex; gap:1.5rem; flex-wrap:wrap;">
+            <div>
+              <span style="display:block; font-size:1.75rem; font-weight:800; color:var(--color-cyan);" class="tabular-nums">98.4%</span>
+              <span style="font-size:0.8125rem; color:#94A3B8;">Sensor Count Precision</span>
+            </div>
+            <div>
+              <span style="display:block; font-size:1.75rem; font-weight:800; color:#38BDF8;" class="tabular-nums">&lt; 1 sec</span>
+              <span style="font-size:0.8125rem; color:#94A3B8;">Telematics Refresh Rate</span>
+            </div>
+            <div>
+              <span style="display:block; font-size:1.75rem; font-weight:800; color:#4ADE80;" class="tabular-nums">0 – 100%</span>
+              <span style="font-size:0.8125rem; color:#94A3B8;">Dynamic Crowd Gauge</span>
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <img src="assets/images/sensor_tech.jpg" alt="ESP32 IoT Infrared Passenger Counter Sensor" style="border-radius:var(--radius-lg); border:1px solid rgba(255,255,255,0.15); box-shadow:0 15px 30px rgba(0,0,0,0.5);">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-brand-title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.2"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.6 19.1 6 18 6H4C2.9 6 1.9 6.6 1.6 7.8L.2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+            <span>BusMitra</span>
+          </div>
+          <p class="footer-tagline">Your Travel Buddy, Always!</p>
+          <p class="footer-desc">
+            Smart public transportation system integrating real-time bus tracking, directional IR crowd density counting, and seat availability forecasting for Indian transit networks.
+          </p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="home.html">Home</a></li>
+            <li><a href="buses.html">Available Buses</a></li>
+            <li><a href="bus-details.html?id=AP161234">Live Bus Tracking</a></li>
+            <li><a href="help.html">Help & FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Preferences</h4>
+          <ul class="footer-links">
+            <li><a href="language.html">Change Language</a></li>
+            <li><a href="profile.html">Commuter Profile</a></li>
+            <li><a href="settings.html">Accessibility Settings</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Hardware Specifications</h4>
+          <p style="font-size:0.8125rem; line-height:1.6; color:#94A3B8;">
+            Directional IR Sensor Pair (FC-51 / TCRT5000) with ESP32 Microcontroller for bi-directional entrance/exit passenger logging.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 BusMitra Public Mobility Systems. All rights reserved.</span>
+        <span>Operational Region: Andhra Pradesh Transit System (Vijayawada – Guntur Zone)</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/language.js"></script>
+  <script src="js/location.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/bus-data.js"></script>
+  <script src="js/bus-search.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // Wire GPS and Voice search buttons on Home
+    document.addEventListener("DOMContentLoaded", function() {
+      const gpsBtn = document.getElementById("use-gps-btn");
+      if (gpsBtn) {
+        gpsBtn.addEventListener("click", () => {
+          window.BUSMITRA_LOCATION.detectCurrentLocation("source-input", "source-location-status");
+        });
+      }
+
+      const voiceBtn = document.getElementById("voice-search-btn");
+      if (voiceBtn) {
+        voiceBtn.addEventListener("click", () => {
+          window.BUSMITRA_VOICE.toggleVoiceInput("dest-input", "voice-search-btn", "voice-feedback-status");
+        });
+      }
+    });
+  </script>
+</body>
+</html>

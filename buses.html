@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Available Buses - BusMitra</title>
+  <meta name="description" content="View real-time scheduled buses, available seats, crowd levels and live tracking for your selected transit route.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .buses-page-header {
+      background: #FFFFFF;
+      padding: 1.75rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .filter-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill-btn {
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .filter-pill-btn:hover, .filter-pill-btn.active {
+      background: #1D4ED8;
+      color: white;
+      border-color: #1D4ED8;
+    }
+
+    .bus-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .bus-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all var(--transition-fast);
+      position: relative;
+    }
+
+    .bus-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #CBD5E1;
+      transform: translateY(-2px);
+    }
+
+    .bus-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .bus-title-group h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--color-navy);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .bus-badge-service {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      background: #EFF6FF;
+      color: var(--color-royal-blue);
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .route-flow-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: var(--bg-surface-alt);
+      border-radius: var(--radius-md);
+      margin-bottom: 1rem;
+    }
+
+    .route-time-point strong {
+      display: block;
+      font-size: 1.15rem;
+      color: var(--color-navy);
+    }
+
+    .route-time-point span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .route-arrow-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .route-arrow-line {
+      width: 60px;
+      height: 2px;
+      background: #CBD5E1;
+      position: relative;
+      margin: 0.25rem 0;
+    }
+
+    .route-arrow-line::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: -3px;
+      width: 0;
+      height: 0;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+      border-left: 6px solid #CBD5E1;
+    }
+
+    .crowd-stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.5rem;
+      padding: 0.75rem 0;
+      border-top: 1px solid var(--border-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .crowd-stat-item .stat-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-navy);
+    }
+
+    .crowd-stat-item .stat-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Demo Notice Banner -->
+  <div class="sim-mode-bar">
+    <div class="mode-info">
+      <span class="sim-mode-tag" data-i18n="simulated_notice">SIMULATED DEMO DATA</span>
+      <span>Live Route Simulation: Showing Demo Buses for Vijayawada ↔ Guntur corridor</span>
+    </div>
+    <div class="mode-actions">
+      <button class="mode-toggle-btn mode-toggle-action">Toggle Mode</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="home.html" class="brand-link">
+        <div class="brand-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.6 19.1 6 18 6H4C2.9 6 1.9 6.6 1.6 7.8L.2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </div>
+        <span class="brand-text">Bus<span class="brand-text-accent">Mitra</span></span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="buses.html" class="nav-link active">Available Buses</a>
+        <a href="bus-details.html?id=AP161234" class="nav-link">Track Bus</a>
+        <a href="help.html" class="nav-link">Help</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="language.html" class="lang-selector-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="header-current-lang">English</span>
+        </a>
+        <a href="profile.html" class="profile-avatar-btn">
+          <img src="assets/images/commuter_avatar.jpg" alt="User Profile" class="profile-avatar-img">
+        </a>
+        <button id="mobile-menu-btn" class="mobile-menu-toggle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Route Summary Strip -->
+  <section class="buses-page-header">
+    <div class="container">
+      <div class="breadcrumbs">
+        <a href="home.html">Home</a>
+        <span class="separator">/</span>
+        <span>Available Buses</span>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--color-navy); margin-bottom: 0.25rem;">
+            <span id="route-title-from">Vijayawada</span> → <span id="route-title-to">Guntur</span>
+          </h1>
+          <p style="font-size: 0.875rem; color: var(--text-muted);">
+            Found <span id="matching-buses-count" style="font-weight:700; color:var(--color-navy);">4</span> scheduled smart buses with real-time IR passenger counts
+          </p>
+        </div>
+
+        <a href="home.html" class="btn btn-secondary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="14 2 18 6 7 17 3 17 3 13 14 2"/></svg>
+          <span>Modify Route</span>
+        </a>
+      </div>
+
+      <!-- Filter & Sort Toolbar -->
+      <div class="filter-toolbar">
+        <div class="filter-group">
+          <span style="font-size: 0.8125rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Filter Crowd:</span>
+          <button class="filter-pill-btn active" data-filter="all">All</button>
+          <button class="filter-pill-btn" data-filter="LOW">Low Crowd</button>
+          <button class="filter-pill-btn" data-filter="MODERATE">Moderate</button>
+          <button class="filter-pill-btn" data-filter="seats">Available Seats Only</button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <!-- Search Bus Number -->
+          <div style="position: relative;">
+            <input id="bus-search-filter" type="text" placeholder="Search Bus No. (e.g. 1234)" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.8125rem; min-width: 170px;">
+          </div>
+          <!-- Sort Dropdown -->
+          <select id="sort-select" class="form-control" style="padding: 0.45rem 0.75rem; font-size: 0.8125rem; width: auto; font-weight: 600;">
+            <option value="departure">Sort: Departure Time</option>
+            <option value="arrival">Sort: Arrival Time</option>
+            <option value="seats">Sort: Available Seats (High to Low)</option>
+            <option value="crowd">Sort: Lowest Crowd Level</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Available Buses List -->
+  <main class="container">
+    <div id="bus-cards-container" class="bus-cards-grid">
+      <!-- Bus Cards injected dynamically -->
+    </div>
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2026 BusMitra Public Mobility Systems. All values calculated dynamically using IR sensor telemetry.</span>
+        <span><a href="help.html" style="text-decoration:underline;">How crowd levels are calculated?</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="js/language.js"></script>
+  <script src="js/bus-data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Parse query params
+      const params = new URLSearchParams(window.location.search);
+      const fromParam = params.get("from") || "Vijayawada";
+      const toParam = params.get("to") || "Guntur";
+
+      const fromTitle = document.getElementById("route-title-from");
+      const toTitle = document.getElementById("route-title-to");
+      if (fromTitle) fromTitle.textContent = fromParam;
+      if (toTitle) toTitle.textContent = toParam;
+
+      let allBuses = window.BUSMITRA_DATA.buses.map(b => window.getBusById(b.id));
+      let currentFilter = "all";
+      let currentSort = "departure";
+      let searchQuery = "";
+
+      const container = document.getElementById("bus-cards-container");
+      const countEl = document.getElementById("matching-buses-count");
+      const sortSelect = document.getElementById("sort-select");
+      const searchFilterInput = document.getElementById("bus-search-filter");
+
+      function renderBuses() {
+        let list = [...allBuses];
+
+        // 1. Text Search Filter (by Bus Number or Name)
+        if (searchQuery) {
+          list = list.filter(b => 
+            b.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            b.name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+
+        // 2. Crowd Level / Seats Filter
+        if (currentFilter === "LOW") {
+          list = list.filter(b => b.crowdLevel === "LOW");
+        } else if (currentFilter === "MODERATE") {
+          list = list.filter(b => b.crowdLevel === "MODERATE");
+        } else if (currentFilter === "seats") {
+          list = list.filter(b => b.availableSeats > 0);
+        }
+
+        // 3. Sorting
+        if (currentSort === "departure") {
+          list.sort((a, b) => a.departureTime.localeCompare(b.departureTime));
+        } else if (currentSort === "arrival") {
+          list.sort((a, b) => a.expectedArrivalTime.localeCompare(b.expectedArrivalTime));
+        } else if (currentSort === "seats") {
+          list.sort((a, b) => b.availableSeats - a.availableSeats);
+        } else if (currentSort === "crowd") {
+          list.sort((a, b) => a.occupancyPercent - b.occupancyPercent);
+        }
+
+        if (countEl) countEl.textContent = list.length;
+
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align:center; padding: 4rem 1.5rem; background:white; border-radius:16px; border:1px solid #E2E8F0;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" style="margin:0 auto 1rem;"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <h3 style="font-size:1.25rem; font-weight:700; color:#0F172A; margin-bottom:0.5rem;">No buses match your filter</h3>
+              <p style="color:#64748B; font-size:0.875rem; margin-bottom:1.5rem;">Try resetting the crowd filter or search query.</p>
+              <button onclick="resetFilters()" class="btn btn-primary btn-sm">Reset All Filters</button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = list.map(bus => `
+          <div class="bus-card">
+            <div>
+              <div class="bus-card-header">
+                <div class="bus-title-group">
+                  <h3>
+                    <span>${bus.number}</span>
+                    <span class="bus-badge-service">${bus.serviceType}</span>
+                  </h3>
+                  <div style="font-size:0.875rem; color:#64748B; margin-top:2px;">${bus.name}</div>
+                </div>
+                <div class="crowd-pill ${bus.crowdClass}">
+                  <span class="sensor-status-dot" style="background:${bus.crowdColor}"></span>
+                  <span>${bus.crowdLevel}</span>
+                </div>
+              </div>
+
+              <!-- Route & Timings Bar -->
+              <div class="route-flow-bar">
+                <div class="route-time-point">
+                  <strong class="tabular-nums">${bus.departureTime}</strong>
+                  <span>${bus.source}</span>
+                </div>
+                <div class="route-arrow-center">
+                  <span>${bus.duration}</span>
+                  <div class="route-arrow-line"></div>
+                  <span style="color:#10B981; font-weight:600; font-size:0.7rem;">GPS: ${bus.gpsStatus}</span>
+                </div>
+                <div class="route-time-point" style="text-align:right;">
+                  <strong class="tabular-nums">${bus.expectedArrivalTime}</strong>
+                  <span>${bus.destination}</span>
+                </div>
+              </div>
+
+              <!-- IR Sensor & Seat Metrics Row -->
+              <div class="crowd-stat-row">
+                <div class="crowd-stat-item">
+                  <div class="stat-val tabular-nums" style="color: ${bus.availableSeats > 5 ? '#16A34A' : bus.availableSeats > 0 ? '#D97706' : '#DC2626'};">
+                    ${bus.availableSeats}
+                  </div>
+                  <div class="stat-lbl">Available Seats</div>
+                </div>
+                <div class="crowd-stat-item">
+                  <div class="stat-val tabular-nums">${bus.currentPassengers} / ${bus.capacity}</div>
+                  <div class="stat-lbl">Occupancy (${bus.occupancyPercent}%)</div>
+                </div>
+                <div class="crowd-stat-item">
+                  <div class="stat-val tabular-nums" style="font-size:0.95rem; color:#0284C7;">${bus.distanceToBoardingKm} km</div>
+                  <div class="stat-lbl">Distance to Stop</div>
+                </div>
+              </div>
+
+              <!-- Unboxed Clean Metadata Line (Anti-Pill Discipline) -->
+              <div class="meta-line" style="margin-bottom:1.25rem;">
+                <span>Current: ${bus.currentLocationName}</span>
+                <span class="meta-separator">·</span>
+                <span>ESP32 IR Count: ${bus.sensorInCount} In / ${bus.sensorOutCount} Out</span>
+                <span class="meta-separator">·</span>
+                <span class="tabular-nums">${bus.lastUpdated}</span>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="bus-card-actions">
+              <a href="bus-details.html?id=${bus.id}" class="btn btn-primary" style="width:100%;">
+                <span>View Bus Details & Track Live</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </a>
+            </div>
+          </div>
+        `).join("");
+      }
+
+      window.resetFilters = function() {
+        currentFilter = "all";
+        searchQuery = "";
+        if (searchFilterInput) searchFilterInput.value = "";
+        document.querySelectorAll(".filter-pill-btn").forEach(b => {
+          b.classList.toggle("active", b.getAttribute("data-filter") === "all");
+        });
+        renderBuses();
+      };
+
+      // Filter Pill buttons
+      document.querySelectorAll(".filter-pill-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".filter-pill-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentFilter = btn.getAttribute("data-filter");
+          renderBuses();
+        });
+      });
+
+      // Search input
+      if (searchFilterInput) {
+        searchFilterInput.addEventListener("input", (e) => {
+          searchQuery = e.target.value.trim();
+          renderBuses();
+        });
+      }
+
+      // Sort Select
+      if (sortSelect) {
+        sortSelect.addEventListener("change", (e) => {
+          currentSort = e.target.value;
+          renderBuses();
+        });
+      }
+
+      // Initial Render
+      renderBuses();
+    });
+  </script>
+</body>
+</html>

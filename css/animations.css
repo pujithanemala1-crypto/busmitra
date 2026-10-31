@@ -1,0 +1,345 @@
+/* ==========================================================================
+   BUSMITRA - Animations & Cinematic Opening Road Scene Stylesheet
+   ========================================================================== */
+
+/* Cinematic Intro Screen Container */
+.intro-stage {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #070e1b 0%, #0d1e38 50%, #15325b 75%, #1a3c6c 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  z-index: 1000;
+  user-select: none;
+}
+
+/* Sky & Stars / City Backdrop */
+.intro-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 180px;
+  overflow: hidden;
+}
+
+/* Distant City Silhouette */
+.city-silhouette {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 220px;
+  background-repeat: repeat-x;
+  background-size: contain;
+  opacity: 0.55;
+  animation: parallaxCity 60s linear infinite;
+}
+
+@keyframes parallaxCity {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Roadside Elements (Trees & Streetlights) */
+.scenery-layer {
+  position: absolute;
+  bottom: 150px;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  pointer-events: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+}
+
+/* Realistic Asphalt Road */
+.road-container {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 35%, #020617 100%);
+  border-top: 6px solid #475569;
+  box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Road Curb & Sidewalk */
+.road-curb {
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+  background: repeating-linear-gradient(90deg, #e2e8f0, #e2e8f0 40px, #0f172a 40px, #0f172a 80px);
+}
+
+/* Animated Road Lane Markings */
+.road-markings {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 200%;
+  height: 10px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(
+    90deg,
+    #f8fafc 0px,
+    #f8fafc 60px,
+    transparent 60px,
+    transparent 120px
+  );
+  animation: roadStripesMove 1.2s linear infinite;
+}
+
+@keyframes roadStripesMove {
+  0% { transform: translate(0, -50%); }
+  100% { transform: translate(-120px, -50%); }
+}
+
+/* Realistic Bus Container */
+.bus-actor-wrap {
+  position: absolute;
+  bottom: 38px;
+  left: -480px; /* starts off-screen left */
+  width: 420px;
+  height: 155px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Bus SVG Styling */
+.bus-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.7));
+}
+
+/* Bus Headlight Beam */
+.headlight-beam {
+  position: absolute;
+  right: -130px;
+  top: 62px;
+  width: 220px;
+  height: 70px;
+  background: linear-gradient(90deg, rgba(254, 240, 138, 0.65) 0%, rgba(254, 240, 138, 0.2) 60%, transparent 100%);
+  clip-path: polygon(0 30%, 100% 0%, 100% 100%, 0 70%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* Bus Shadow on Road */
+.bus-ground-shadow {
+  position: absolute;
+  bottom: -6px;
+  left: 30px;
+  width: 360px;
+  height: 14px;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.3) 60%, transparent 80%);
+  border-radius: 50%;
+  filter: blur(3px);
+}
+
+/* Bus Wheel Rotation */
+.wheel-rotate {
+  transform-origin: center;
+  animation: spinWheel 0.4s linear infinite;
+}
+
+@keyframes spinWheel {
+  100% { transform: rotate(360deg); }
+}
+
+/* Bus Slight Suspension Bounce */
+.bus-chassis {
+  animation: chassisBounce 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes chassisBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+/* Intro UI Controls Overlay */
+.intro-controls {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.intro-btn {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.6rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.intro-btn:hover {
+  background: rgba(29, 78, 216, 0.85);
+  border-color: var(--color-cyan);
+  transform: translateY(-1px);
+}
+
+/* Logo Reveal Container */
+.logo-reveal-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #0e203f 0%, #081120 70%, #030712 100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo-reveal-stage.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.logo-big-badge {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #1D4ED8 0%, #06B6D4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 50px rgba(6, 182, 212, 0.4);
+}
+
+.logo-big-badge svg {
+  width: 52px;
+  height: 52px;
+}
+
+.logo-big-title {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: white;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.logo-big-title span {
+  background: linear-gradient(135deg, #38BDF8 0%, #22D3EE 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-tagline {
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+  color: #94A3B8;
+  font-weight: 500;
+  margin-bottom: 2rem;
+  letter-spacing: 0.01em;
+}
+
+/* Voice Microphone Pulsing Animation */
+.mic-recording-pulse {
+  animation: micPulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+/* Live Map Bus Marker Glow */
+.bus-marker-icon {
+  background: #1D4ED8;
+  border: 2.5px solid white;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.bus-marker-icon::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid #06B6D4;
+  animation: markerPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes markerPing {
+  75%, 100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Stop Marker Styles */
+.stop-marker-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 3px solid #1D4ED8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stop-marker-dot.current {
+  border-color: #06B6D4;
+  background: #06B6D4;
+  transform: scale(1.3);
+}
+
+.stop-marker-dot.completed {
+  border-color: #10B981;
+  background: #10B981;
+}
+
+/* Generic Animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "BusMitra - Smart Public Transportation & Live Bus Tracking",
+  "description": "Your Travel Buddy, Always! Smart public transportation system with live bus tracking, real-time IR sensor crowd monitoring, seat availability, and ETA prediction.",
+  "requestFramePermissions": ["geolocation", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

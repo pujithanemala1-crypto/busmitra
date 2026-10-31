@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bus Details & Live Tracking - BusMitra</title>
+  <meta name="description" content="Live bus tracking dashboard with Leaflet map, route timeline, real-time IR sensor passenger counts and crowd prediction.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .bus-details-hero {
+      background: #FFFFFF;
+      padding: 1.5rem 0 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .kpi-metric-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .kpi-metric-card {
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .kpi-metric-card .kpi-label {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-metric-card .kpi-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--color-navy);
+      line-height: 1.2;
+    }
+
+    .map-wrapper {
+      height: 480px;
+      width: 100%;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    .map-overlay-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(8px);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.8125rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .map-controls-panel {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Vertical Timeline for Stops */
+    .vertical-timeline {
+      position: relative;
+      padding-left: 2rem;
+      margin-top: 1.25rem;
+    }
+
+    .vertical-timeline::before {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 10px;
+      bottom: 10px;
+      width: 2px;
+      background: #CBD5E1;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: 1.75rem;
+    }
+
+    .timeline-item:last-child {
+      padding-bottom: 0;
+    }
+
+    .timeline-bullet {
+      position: absolute;
+      left: -2rem;
+      top: 3px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      border: 3px solid #94A3B8;
+      box-shadow: 0 0 0 2px #FFFFFF;
+    }
+
+    .timeline-item.completed .timeline-bullet {
+      background: #10B981;
+      border-color: #10B981;
+    }
+
+    .timeline-item.current .timeline-bullet {
+      background: #06B6D4;
+      border-color: #06B6D4;
+      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.25);
+    }
+
+    .timeline-item.next .timeline-bullet {
+      background: #FFFFFF;
+      border-color: #1D4ED8;
+    }
+
+    .sensor-flash-active {
+      animation: sensorGlow 0.4s ease-out;
+    }
+
+    @keyframes sensorGlow {
+      0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8); }
+      50% { box-shadow: 0 0 0 12px rgba(6, 182, 212, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Demo Notice Banner -->
+  <div class="sim-mode-bar">
+    <div class="mode-info">
+      <span class="sim-mode-tag" data-i18n="simulated_notice">SIMULATED DEMO DATA</span>
+      <span>Live Telematics Stream: Simulating directional IR entry/exit pulses & GPS telemetry</span>
+    </div>
+    <div class="mode-actions">
+      <button class="mode-toggle-btn mode-toggle-action">Toggle Mode</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="home.html" class="brand-link">
+        <div class="brand-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.6 19.1 6 18 6H4C2.9 6 1.9 6.6 1.6 7.8L.2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/>
+          </svg>
+        </div>
+        <span class="brand-text">Bus<span class="brand-text-accent">Mitra</span></span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="buses.html" class="nav-link">Available Buses</a>
+        <a href="bus-details.html?id=AP161234" class="nav-link active">Track Bus</a>
+        <a href="help.html" class="nav-link">Help</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="language.html" class="lang-selector-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span id="header-current-lang">English</span>
+        </a>
+        <a href="profile.html" class="profile-avatar-btn">
+          <img src="assets/images/commuter_avatar.jpg" alt="User Profile" class="profile-avatar-img">
+        </a>
+        <button id="mobile-menu-btn" class="mobile-menu-toggle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Bus Title Strip -->
+  <section class="bus-details-hero">
+    <div class="container">
+      <div class="breadcrumbs">
+        <a href="home.html">Home</a>
+        <span class="separator">/</span>
+        <a href="buses.html">Available Buses</a>
+        <span class="separator">/</span>
+        <span id="crumb-bus-no">Bus Details</span>
+      </div>
+
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+            <h1 id="details-bus-number" style="font-size: 2rem; font-weight: 800; color: var(--color-navy);">
+              AP 16 1234
+            </h1>
+            <span id="details-service-badge" class="bus-badge-service" style="font-size: 0.8125rem; padding: 0.2rem 0.6rem;">
+              Express
+            </span>
+            <div id="metric-crowd-tag" class="crowd-pill low">
+              <span class="sensor-status-dot" style="background:var(--crowd-low)"></span>
+              LOW
+            </div>
+          </div>
+          <div style="font-size: 1rem; color: var(--text-muted); font-weight: 500;">
+            <span id="details-bus-name">Amaravati Express</span> · Route: <span id="details-route-name">Vijayawada to Guntur</span>
+          </div>
+        </div>
+
+        <!-- Telematics Status Badges -->
+        <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+          <div style="font-size: 0.8125rem; color: var(--text-muted); text-align: right;">
+            <div>ESP32 IR Sensor: <strong style="color: #10B981;">CONNECTED</strong></div>
+            <div>GPS Status: <strong style="color: #1D4ED8;">ACTIVE (100% Signal)</strong></div>
+          </div>
+          <button id="sim-reset-sensors-btn" class="btn btn-secondary btn-sm" title="Calibrate Sensor Counters">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+            <span>Calibrate</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Real-Time Metrics Strip (Capacity, Current Passengers, Available Seats, Occupancy) -->
+      <div class="kpi-metric-strip">
+        <div class="kpi-metric-card">
+          <div class="kpi-label">
+            <span>Available Seats</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.2"><path d="M19 9V6a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v3"/><path d="M3 11v5a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>
+          </div>
+          <div id="metric-seats" class="kpi-value tabular-nums" style="color: #16A34A;">25</div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Max(0, Capacity - Onboard)</span>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-label">
+            <span>Current Passengers</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div id="metric-passengers" class="kpi-value tabular-nums">25</div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Total IN - Total OUT</span>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-label">
+            <span>Occupancy Rate</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div id="metric-occupancy" class="kpi-value tabular-nums">50%</div>
+          <div style="width:100%; height:6px; background:#E2E8F0; border-radius:3px; margin-top:0.4rem; overflow:hidden;">
+            <div id="metric-occupancy-bar" style="width:50%; height:100%; background:#16A34A; transition:all 0.4s ease;"></div>
+          </div>
+        </div>
+
+        <div class="kpi-metric-card">
+          <div class="kpi-label">
+            <span>Approaching Stop ETA</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          </div>
+          <div id="tracking-live-eta" class="kpi-value tabular-nums">14 mins</div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Speed: <span id="tracking-live-speed" class="tabular-nums">52 km/h</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Dashboard -->
+  <main class="container" style="padding-top: 2rem; padding-bottom: 4rem;">
+    
+    <!-- SECTION A: LIVE BUS TRACKING MAP -->
+    <section class="card" style="margin-bottom: 2rem; padding: 1.25rem;">
+      <div class="card-header" style="margin-bottom: 0.75rem;">
+        <div>
+          <h2 class="card-title" style="display:flex; align-items:center; gap:0.5rem;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2.2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+            <span>Live Interactive Map Tracking</span>
+          </h2>
+          <p class="card-subtitle">Real-time bus telemetry animated along the Vijayawada–Guntur corridor</p>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <button id="map-recenter-btn" class="btn btn-secondary btn-sm" onclick="BUSMITRA_TRACKING.recenterOnBus()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="10"/></svg>
+            <span>Focus Bus</span>
+          </button>
+          <button id="map-reset-btn" class="btn btn-secondary btn-sm" onclick="BUSMITRA_TRACKING.resetView()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <span>Fit Route</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Leaflet Map Container -->
+      <div id="live-map-container" class="map-wrapper">
+        <div class="map-overlay-badge">
+          <span class="sensor-status-dot connected"></span>
+          <span>SIMULATED LIVE TRACKING · AP 16 1234</span>
+        </div>
+      </div>
+
+      <!-- Map Legend Bar -->
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid var(--border-subtle); font-size:0.8125rem; color:var(--text-muted);">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <span style="display:inline-flex; align-items:center; gap:0.35rem;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#10B981;"></span> Departure Stop
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:0.35rem;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#06B6D4;"></span> Next Approaching
+          </span>
+          <span style="display:inline-flex; align-items:center; gap:0.35rem;">
+            <span style="width:10px; height:10px; border-radius:50%; background:#EF4444;"></span> Destination
+          </span>
+        </div>
+        <div>
+          <span>Route: 34.5 km · 6 Intermediate Stations</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2-Column Split: Route Timeline & IR Sensor Hardware Station -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;" class="details-grid">
+      
+      <!-- SECTION B & C: ROUTE & TIMINGS TIMELINE -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Route & Stop Schedule</h2>
+            <p class="card-subtitle">Scheduled vs. Live Approaching Status</p>
+          </div>
+          <span class="crowd-pill low" style="font-size:0.75rem;">On Time</span>
+        </div>
+
+        <div class="vertical-timeline">
+          
+          <div class="timeline-item completed">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:var(--color-navy); font-size:0.95rem;">1. Vijayawada (PNBS)</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:#10B981; font-weight:600;">Departed 10:30 AM</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">Origin Terminal · Platform 4</p>
+          </div>
+
+          <div class="timeline-item completed">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:var(--color-navy); font-size:0.95rem;">2. Enikepadu Junction</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:#10B981; font-weight:600;">Passed 10:45 AM</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">Boarded: +8 | Alighted: -2</p>
+          </div>
+
+          <div class="timeline-item current">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:#0284C7; font-size:0.95rem;">3. Gannavaram Bypass</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:#0284C7; font-weight:700;">Approaching (11:00 AM)</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">Distance: 1.2 km away · Estimated 4 mins</p>
+          </div>
+
+          <div class="timeline-item next">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:var(--color-navy); font-size:0.95rem;">4. Mangalagiri (AIIMS)</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:var(--text-muted);">Sched: 11:15 AM</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">High transit demand expected</p>
+          </div>
+
+          <div class="timeline-item next">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:var(--color-navy); font-size:0.95rem;">5. Tadepalli Highway</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:var(--text-muted);">Sched: 11:30 AM</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">Bypass Junction Stop</p>
+          </div>
+
+          <div class="timeline-item next">
+            <div class="timeline-bullet"></div>
+            <div style="display:flex; justify-content:space-between;">
+              <strong style="color:var(--color-navy); font-size:0.95rem;">6. Guntur (NTR Terminal)</strong>
+              <span class="tabular-nums" style="font-size:0.8125rem; color:var(--text-muted);">Expected: 11:45 AM</span>
+            </div>
+            <p style="font-size:0.8125rem; color:var(--text-muted);">Final Destination Terminal</p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SECTION D: IR SENSOR CROWD MONITORING & HARDWARE SIMULATOR -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">IR Sensor Crowd Monitor</h2>
+            <p class="card-subtitle">Dual-Beam ESP32 Passenger Direction Counters</p>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.4rem;">
+            <span class="sensor-status-dot connected"></span>
+            <span style="font-size:0.75rem; font-weight:700; color:#10B981;">ESP32 ACTIVE</span>
+          </div>
+        </div>
+
+        <!-- Hardware Sensor Indicator Cards -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+          
+          <!-- Entrance Door Sensor -->
+          <div id="entrance-sensor-indicator" style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:var(--radius-md); padding:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+              <span style="font-size:0.75rem; font-weight:700; color:#166534; text-transform:uppercase;">Front Entrance Sensor</span>
+              <span style="width:8px; height:8px; border-radius:50%; background:#10B981;"></span>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:0.5rem;">
+              <div id="metric-in-count" class="tabular-nums" style="font-size:1.6rem; font-weight:800; color:#166534;">32</div>
+              <span style="font-size:0.8125rem; color:#166534;">Total IN</span>
+            </div>
+            <span style="font-size:0.7rem; color:#15803D;">IR Beam A → Beam B Sequence</span>
+          </div>
+
+          <!-- Exit Door Sensor -->
+          <div id="exit-sensor-indicator" style="background:#FEF2F2; border:1px solid #FECACA; border-radius:var(--radius-md); padding:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+              <span style="font-size:0.75rem; font-weight:700; color:#991B1B; text-transform:uppercase;">Rear Exit Sensor</span>
+              <span style="width:8px; height:8px; border-radius:50%; background:#EF4444;"></span>
+            </div>
+            <div style="display:flex; align-items:baseline; gap:0.5rem;">
+              <div id="metric-out-count" class="tabular-nums" style="font-size:1.6rem; font-weight:800; color:#991B1B;">7</div>
+              <span style="font-size:0.8125rem; color:#991B1B;">Total OUT</span>
+            </div>
+            <span style="font-size:0.7rem; color:#B91C1C;">IR Beam B → Beam A Sequence</span>
+          </div>
+
+        </div>
+
+        <!-- Interactive Hardware Simulator Buttons (Click to test physical IR events) -->
+        <div style="background:var(--bg-surface-alt); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem;">
+          <div style="font-size:0.8125rem; font-weight:700; color:var(--color-navy); margin-bottom:0.5rem; display:flex; justify-content:space-between;">
+            <span>Hardware Telemetry Simulator</span>
+            <span style="font-size:0.75rem; color:#64748B;">Click buttons to test live updates</span>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+            <button id="sim-board-btn" class="btn btn-primary btn-sm" style="background:#16A34A; border-color:#16A34A;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Passenger Boards (+1 IN)</span>
+            </button>
+            <button id="sim-alight-btn" class="btn btn-secondary btn-sm" style="color:#DC2626; border-color:#FCA5A5;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Passenger Alights (-1 OUT)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chart.js Activity Stream -->
+        <div style="height: 180px; position:relative;">
+          <canvas id="sensor-activity-chart"></canvas>
+        </div>
+
+        <div style="margin-top:0.75rem; font-size:0.75rem; color:var(--text-muted); display:flex; justify-content:space-between;">
+          <span>Last IR Pulse: <strong id="metric-last-update" class="tabular-nums" style="color:var(--color-navy);">Just now</strong></span>
+          <span>ESP32 Firmware: v2.4 (Bi-directional)</span>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- SECTION E: NEXT STOP CROWD PREDICTION DASHBOARD -->
+    <section class="card" style="background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);">
+      <div class="card-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:0.5rem;">
+            <h2 class="card-title">Next Stop Crowd Prediction</h2>
+            <span class="crowd-pill" style="background:#EFF6FF; color:#1D4ED8; border:1px solid #BFDBFE;">
+              AI & Historical Trend Forecast
+            </span>
+          </div>
+          <p class="card-subtitle">Forecasted occupancy when the bus arrives at the next transit station</p>
+        </div>
+
+        <div style="font-size:0.8125rem; color:var(--text-muted);">
+          Confidence Score: <strong id="pred-confidence-score" style="color:#10B981; font-weight:700;">94%</strong>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:1.25rem;">
+        
+        <div style="background:white; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <span style="font-size:0.8125rem; color:var(--text-muted); font-weight:600;">Approaching Station</span>
+          <div id="pred-next-stop-name" style="font-size:1.15rem; font-weight:800; color:var(--color-navy); margin-top:0.25rem;">
+            Mangalagiri (AIIMS)
+          </div>
+          <span style="font-size:0.75rem; color:var(--color-royal-blue);">Estimated Arrival: in 14 mins</span>
+        </div>
+
+        <div style="background:white; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <span style="font-size:0.8125rem; color:var(--text-muted); font-weight:600;">Predicted Occupancy</span>
+          <div style="display:flex; align-items:baseline; gap:0.5rem; margin-top:0.25rem;">
+            <div id="pred-occupancy-val" class="tabular-nums" style="font-size:1.6rem; font-weight:800; color:var(--color-navy);">62%</div>
+            <div id="pred-crowd-tag" class="crowd-pill moderate">MODERATE</div>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Comfortable seating expected</span>
+        </div>
+
+        <div style="background:white; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <span style="font-size:0.8125rem; color:var(--text-muted); font-weight:600;">Expected Passenger Flow</span>
+          <div style="display:flex; align-items:center; gap:1rem; margin-top:0.25rem;">
+            <div>
+              <span id="pred-expected-boarding" class="tabular-nums" style="font-weight:700; color:#16A34A; font-size:1.15rem;">+9</span>
+              <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Boarding</span>
+            </div>
+            <div style="height:24px; width:1px; background:#E2E8F0;"></div>
+            <div>
+              <span id="pred-expected-alight" class="tabular-nums" style="font-weight:700; color:#DC2626; font-size:1.15rem;">-3</span>
+              <span style="font-size:0.75rem; color:var(--text-muted); display:block;">Alighting</span>
+            </div>
+          </div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Based on stop history</span>
+        </div>
+
+        <div style="background:white; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <span style="font-size:0.8125rem; color:var(--text-muted); font-weight:600;">Predicted Available Seats</span>
+          <div id="pred-seats-val" class="tabular-nums" style="font-size:1.6rem; font-weight:800; color:#16A34A; margin-top:0.25rem;">
+            19
+          </div>
+          <span style="font-size:0.75rem; color:#16A34A; font-weight:600;">Guaranteed seating available</span>
+        </div>
+
+      </div>
+
+      <!-- Verified Data Notice -->
+      <div style="margin-top:1.25rem; padding-top:1rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; font-size:0.8125rem; color:var(--text-muted);">
+        <div>
+          <span>Data Foundation: </span>
+          <strong id="pred-data-source" style="color:var(--color-navy);">Historical IR Patterns + Commuter Card Swipes</strong>
+        </div>
+        <div style="font-size:0.75rem; color:#64748B;">
+          *Notice: Directional IR sensors count physical entry/exit; destination alighting forecasts use historical statistical models.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Global Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <span>© 2026 BusMitra Public Mobility Systems. All rights reserved.</span>
+        <span>Route: Vijayawada ↔ Guntur High-Speed Transit Corridor</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- External Libraries: Leaflet & Chart.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- App Modules -->
+  <script src="js/language.js"></script>
+  <script src="js/bus-data.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/tracking.js"></script>
+  <script src="js/crowd-monitor.js"></script>
+  <script src="js/prediction.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const params = new URLSearchParams(window.location.search);
+      const busId = params.get("id") || "AP161234";
+
+      const bus = window.getBusById(busId) || window.BUSMITRA_DATA.buses[0];
+
+      // Update Header Text Elements
+      const busNoEl = document.getElementById("details-bus-number");
+      const busNameEl = document.getElementById("details-bus-name");
+      const serviceBadgeEl = document.getElementById("details-service-badge");
+      const crumbEl = document.getElementById("crumb-bus-no");
+
+      if (busNoEl) busNoEl.textContent = bus.number;
+      if (busNameEl) busNameEl.textContent = bus.name;
+      if (serviceBadgeEl) serviceBadgeEl.textContent = bus.serviceType;
+      if (crumbEl) crumbEl.textContent = bus.number;
+
+      // 1. Initialize Leaflet Map
+      window.BUSMITRA_TRACKING.initMap("live-map-container", bus.id);
+
+      // 2. Initialize IR Sensor Crowd Monitoring & Dynamic Seat Counters
+      window.BUSMITRA_CROWD.init(bus.id, "sensor-activity-chart");
+
+      // 3. Initialize Next-Stop Prediction
+      window.BUSMITRA_PREDICTION.updatePrediction(bus);
+    });
+  </script>
+</body>
+</html>
